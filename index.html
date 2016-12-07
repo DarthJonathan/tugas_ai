@@ -1,0 +1,130 @@
+<html>
+	<head>
+		<!-- Title -->
+		<title>Artificial Intelligence</title>
+
+		<!-- CSS -->
+
+		<!-- Javascript -->
+		<script src="jquery-3.1.1.min.js"></script>
+		<script src="https://turbo.github.io/js/turbo.js"></script>
+
+	</head>
+	<body>
+		<canvas id="canvas" width="500px" height="500px"></canvas>
+		<br>
+		Input File Template : <input type="file" id="file-input">
+
+		Input File from Camera : <input type="file" id="file-camera">
+		
+		<div id="alert"></div>
+		<div id="color" style="height:100px; width:200px;"></div>
+		
+		<script>
+			$(function() {
+			    $('#file-input').change(function(e) {
+			        var file = e.target.files[0],
+			            imageType = /image.*/;
+			        
+			        if (!file.type.match(imageType))
+			            $('#alert').append('not an image');
+			        
+			        var reader = new FileReader();
+			        reader.onload = fileOnload;
+			        reader.readAsDataURL(file);
+			        
+			    });
+			    
+			    function fileOnload(e) {
+			        var $img = $('<img>', { src: e.target.result });
+			        var canvas = $('#canvas')[0];
+			        var context = canvas.getContext('2d');
+			        var color = document.getElementById("color");
+			        var red = 0, green = 0, blue = 0, counter = 0, flag = 0, flagBefore = 0;
+			        var startX = [], startY = [], endX = [], endY = [];
+
+			        $img.on('load', function() {
+			           
+			            //Print The Image Into The Div
+			            context.drawImage(this, 0, 0);
+
+			            //Call TurboJS
+			            if(turbojs)
+			            {
+						
+							//Get Mean of Colors
+							for(var i=0; i<500; i++)
+							{
+								for(var j=0; j<500; j++)
+								{
+									var canvasColor = context.getImageData(j, i, 1, 1).data; // rgba e [0,255]
+
+									if(canvasColor[0] > 220 && canvasColor[1] > 220 && canvasColor[2] > 220 && flag > 0)
+									{ 
+										//Check the diagonal pixel
+										var checkBackDown = context.getImageData(j-1, i+1, 1, 1).data;
+										var checkBackTop = context.getImageData(j-1, i-1, 1, 1).data;
+										var checkFrontTop = context.getImageData(j+1, i-1, 1, 1).data;
+										var checkFrontDown = context.getImageData(j+1, i+1, 1, 1).data;
+
+										if(checkBackDown[0] > 220 && checkBackDown[1] > 220 && checkBackDown[2] > 220 && checkBackTop[0] < 30 && checkBackTop[1] < 30 && checkBackTop[2] < 30 && checkFrontTop[0] > 220 && checkFrontTop[1] > 220 && checkFrontTop[2] > 220 && checkFrontDown[0] > 220 && checkFrontDown[1] > 220 && checkFrontDown[2] > 220)
+										{
+											endX[counter] 	= j-1;
+											endY[counter]	= i;
+
+											// $('#alert').append("i : " + i + "<br>" + "j : " + j + "<hr>");
+											// $('#alert').append("r :" + checkBack[0] + "<br>" + "g :" + checkBack[1] + "<br>" + "b :" + checkBack[2] + "<br>" +"<hr>");
+
+											counter++;
+
+											flag --;										
+										}
+									}
+
+									
+									if(canvasColor[0] < 30 && canvasColor[1] < 30 && canvasColor[2] < 30)
+									{ 
+										//Check the diagonal pixel
+										var checkBackDown = context.getImageData(j-1, i+1, 1, 1).data;
+										var checkBackTop = context.getImageData(j-1, i-1, 1, 1).data;
+										var checkFrontTop = context.getImageData(j+1, i-1, 1, 1).data;
+										var checkFrontDown = context.getImageData(j+1, i+1, 1, 1).data;
+										
+										// $('#alert').append("r :" + checkBackDown[0] + "<br>" + "g :" + checkBackDown[1] + "<br>" + "b :" + checkBackDown[2] + "<br>" +"<hr>");
+										// $('#alert').append("r :" + checkBackTop[0] + "<br>" + "g :" + checkBackTop[1] + "<br>" + "b :" + checkBackTop[2] + "<br>" +"<hr>");
+										// $('#alert').append("r :" + checkFrontTop[0] + "<br>" + "g :" + checkFrontTop[1] + "<br>" + "b :" + checkFrontTop[2] + "<br>" +"<hr>");
+										// $('#alert').append("r :" + checkFrontDown[0] + "<br>" + "g :" + checkFrontDown[1] + "<br>" + "b :" + checkFrontDown[2] + "<br>" +"<hr>");
+
+
+										if(checkBackDown[0] > 220 && checkBackDown[1] > 220 && checkBackDown[2] > 220 && checkBackTop[0] > 220 && checkBackTop[1] > 220 && checkBackTop[2] > 220 && checkFrontTop[0] > 220 && checkFrontTop[1] > 220 && checkFrontTop[2] > 220 && checkFrontDown[0] < 30 && checkFrontDown[1] < 30 && checkFrontDown[2] < 30)
+										{
+											
+											//Start Scanning Pixel
+											startX[flag+counter] 	= j;
+											startY[flag+counter]	= i;
+
+											// $('#alert').append("r :" + canvasColor[0] + "<br>" + "g :" + canvasColor[1] + "<br>" + "b :" + canvasColor[2] + "<br>" +"<hr>");
+
+											flag++;
+										}
+									}
+								}	
+							}
+
+							for(var z = 0; z<counter; z++)
+							{
+								$('#alert').append("Counter : " + z +"<br>START : <br> x : " + startX[z] + "<br>" + "y : " + startY[z] + "<hr>");
+								$('#alert').append("END : <br> x : " + endX[z] + "<br>" + "y : " + endY[z] + "<hr>");
+							}
+						}
+
+						// $('#alert').append(counter);
+
+						// alert(flag);
+
+			        });
+			    }
+			});
+		</script>
+	</body>
+</html>
