@@ -12,16 +12,23 @@
 	</head>
 	<body>
 		<canvas id="canvas" width="500px" height="500px"></canvas>
+		<canvas id="canvas2" width="500px" height="500px"></canvas>
 		<br>
 		Input File Template : <input type="file" id="file-input">
 
 		Input File from Camera : <input type="file" id="file-camera">
 		
 		<div id="alert"></div>
+		<div id="result"></div>
 		<div id="color" style="height:100px; width:200px;"></div>
 		
+		<script type="javascript"></script>
 		<script>
+			//Init Global Var
+			var startX = [], startY = [], endX = [], endY = [], counter = 0;
+			
 			$(function() {
+
 			    $('#file-input').change(function(e) {
 			        var file = e.target.files[0],
 			            imageType = /image.*/;
@@ -34,14 +41,26 @@
 			        reader.readAsDataURL(file);
 			        
 			    });
+
+			    $('#file-camera').change(function(e) {
+			        var file = e.target.files[0],
+			            imageType = /image.*/;
+			        
+			        if (!file.type.match(imageType))
+			            $('#alert').append('not an image');
+			        
+			        var readerCam = new FileReader();
+			        readerCam.onload = fileOnloadCam;
+			        readerCam.readAsDataURL(file);
+			        
+			    });
 			    
 			    function fileOnload(e) {
 			        var $img = $('<img>', { src: e.target.result });
 			        var canvas = $('#canvas')[0];
 			        var context = canvas.getContext('2d');
 			        var color = document.getElementById("color");
-			        var red = 0, green = 0, blue = 0, counter = 0, flag = 0, flagBefore = 0;
-			        var startX = [], startY = [], endX = [], endY = [];
+			        var red = 0, green = 0, blue = 0, flag = 0, flagBefore = 0;
 
 			        $img.on('load', function() {
 			           
@@ -51,7 +70,6 @@
 			            //Call TurboJS
 			            if(turbojs)
 			            {
-						
 							//Get Mean of Colors
 							for(var i=0; i<500; i++)
 							{
@@ -111,16 +129,82 @@
 								}	
 							}
 
-							for(var z = 0; z<counter; z++)
-							{
-								$('#alert').append("Counter : " + z +"<br>START : <br> x : " + startX[z] + "<br>" + "y : " + startY[z] + "<hr>");
-								$('#alert').append("END : <br> x : " + endX[z] + "<br>" + "y : " + endY[z] + "<hr>");
-							}
+							//Debug points
+							// for(var z = 0; z<counter; z++)
+							// {
+							// 	$('#alert').append("Counter : " + z +"<br>START : <br> x : " + startX[z] + "<br>" + "y : " + startY[z] + "<hr>");
+							// 	$('#alert').append("END : <br> x : " + endX[z] + "<br>" + "y : " + endY[z] + "<hr>");
+							// }
 						}
 
 						// $('#alert').append(counter);
-
 						// alert(flag);
+
+			        });
+			    }
+
+			    //When The Second Button Is Clicked
+			    function fileOnloadCam(e) {
+			        var $img = $('<img>', { src: e.target.result });
+			        var canvas = $('#canvas2')[0];
+			        var context = canvas.getContext('2d');
+			        var color = document.getElementById("color");
+			        var meanRed = [], meanBlue = [], meanGreen = [];
+
+			        $img.on('load', function() {
+
+		            //Print The Image Into The Div
+		            context.drawImage(this, 0, 0);
+
+			        //Check if turbo js is available
+		        	if(turbojs)
+		        	{
+		        		//Counter to get mean of pixels in the box
+		        		var countPixels = 0;
+
+		        		//Loop for every black square
+			        	for(var i = 0; i < counter; i++)
+			        	{
+			        		//Init the values
+			        		meanRed[i] 		= 0;
+							meanGreen[i] 	= 0;
+							meanBlue[i]		= 0;
+
+			        		//Get Mean of Colors
+							for(var y = startY[i]; y < endY[i]; y++)
+							{
+								for(var x = startX[i]; x < endX[i]; x++)
+								{
+									var canvasColor = context.getImageData(x, y, 1, 1).data; // rgba e [0,255]
+
+									meanRed[i] 		+= canvasColor[0];
+									meanGreen[i] 	+= canvasColor[1];
+									meanBlue[i]		+= canvasColor[2];
+
+									countPixels++;
+								}
+							}
+
+							meanRed[i] 		= meanRed[i] / countPixels;
+							meanGreen[i] 	= meanGreen[i] / countPixels;
+							meanBlue[i] 	= meanBlue[i] / countPixels;
+
+			        		countPixels = 0;
+			        	}
+			        }
+
+			       	for(var i = 0; i < counter; i++)
+			       	{
+			       		if(meanRed[i] < 70 && meanGreen[i] < 70 && meanBlue[i] < 70)
+			       		{
+			       			//The Seat is Free
+			       			$('#result').append("Seat Num : " + i + "<br>is Free<hr>");
+			       		}else
+			       		{
+			       			//The Seat is Occupied
+			       			$('#result').append("Seat Num : " + i + "<br>is Occuppied<hr>")
+			       		}
+			       	}
 
 			        });
 			    }
